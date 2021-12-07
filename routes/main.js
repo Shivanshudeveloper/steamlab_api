@@ -9,6 +9,7 @@ const Products_Model = require("../models/Products");
 const MainStore_Model = require("../models/MainStore");
 
 const FeaturedProduct_Model = require("../models/FeaturedProduct");
+const Notification_Model = require("../models/Notification");
 
 
 const FileUpload_Model = require("../models/FileUpload");
@@ -171,8 +172,8 @@ router.get("/getuserallfileuploadedtoserver", (req, res) => {
 });
 
 
-router.get("/changestatusfileupload/:id/:status", (req, res) => {
-  const { id, status } = req.params;
+router.get("/changestatusfileupload/:id/:status/:email/:filename", (req, res) => {
+  const { id, status, email, filename } = req.params;
   res.setHeader("Content-Type", "application/json");
   FileUpload_Model.findOneAndUpdate(
     { _id: id },
@@ -180,10 +181,92 @@ router.get("/changestatusfileupload/:id/:status", (req, res) => {
     { useFindAndModify: false }
   )
     .then(() => {
-      res.status(200).json("Updated Product");
+      const newNotification = new Notification_Model({
+        useremail: email,
+        message: `File ${filename} status changed to ${status}`
+      });
+      newNotification
+        .save()
+        .then((data) => {
+          res.status(200).json("Updated Product");
+        })
+        .catch(
+          (err) => {
+            console.log(err)
+          }
+        );
+
     })
     .catch((err) => console.log(err));
 });
+
+
+
+router.get("/getstatsfileuploadtoserver/:query", (req, res) => {
+  const { query } = req.params;
+  res.setHeader("Content-Type", "application/json");
+
+  if (query === "admin") {
+    var totalfileuploaded = 0;
+    var totalfiledelivered = 0;
+    var totalfileinvoiced = 0;
+    var totalfileinprocess = 0;
+    FileUpload_Model.countDocuments({  }).then((count) => {
+      totalfileuploaded = count;
+      FileUpload_Model.countDocuments({ status: 'Delivered' }).then((count) => {
+        totalfiledelivered = count;
+        FileUpload_Model.countDocuments({ status: 'Invoiced' }).then((count) => {
+          totalfileinvoiced = count;
+          FileUpload_Model.countDocuments({ status: 'In process' }).then((count) => {
+            totalfileinprocess = count;
+            res.status(200).json({
+              totalfileuploaded,
+              totalfiledelivered,
+              totalfileinvoiced,
+              totalfileinprocess
+            });
+          });
+        });
+      });
+    });
+  } else {
+    var totalfileuploaded = 0;
+    var totalfiledelivered = 0;
+    var totalfileinvoiced = 0;
+    var totalfileinprocess = 0;
+    FileUpload_Model.countDocuments({ useremail: query }).then((count) => {
+      totalfileuploaded = count;
+      FileUpload_Model.countDocuments({ useremail: query, status: 'Delivered' }).then((count) => {
+        totalfiledelivered = count;
+        FileUpload_Model.countDocuments({ useremail: query, status: 'Invoiced' }).then((count) => {
+          totalfileinvoiced = count;
+          FileUpload_Model.countDocuments({ useremail: query, status: 'In process' }).then((count) => {
+            totalfileinprocess = count;
+            res.status(200).json({
+              totalfileuploaded,
+              totalfiledelivered,
+              totalfileinvoiced,
+              totalfileinprocess
+            });
+          });
+        });
+      });
+    });
+  }
+});
+
+
+
+router.get("/getusernotificationsfileuploadto/:email", (req, res) => {
+  const { email } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Notification_Model.find({ useremail: email }).sort({ date: -1 }).limit(8)
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
+
 
 
 module.exports = router;
