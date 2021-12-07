@@ -211,13 +211,13 @@ router.get("/getstatsfileuploadtoserver/:query", (req, res) => {
     var totalfiledelivered = 0;
     var totalfileinvoiced = 0;
     var totalfileinprocess = 0;
-    FileUpload_Model.countDocuments({  }).then((count) => {
+    FileUpload_Model.countDocuments({ adminview: true }).then((count) => {
       totalfileuploaded = count;
-      FileUpload_Model.countDocuments({ status: 'Delivered' }).then((count) => {
+      FileUpload_Model.countDocuments({ adminview: true, status: 'Delivered' }).then((count) => {
         totalfiledelivered = count;
-        FileUpload_Model.countDocuments({ status: 'Invoiced' }).then((count) => {
+        FileUpload_Model.countDocuments({ adminview: true, status: 'Invoiced' }).then((count) => {
           totalfileinvoiced = count;
-          FileUpload_Model.countDocuments({ status: 'In process' }).then((count) => {
+          FileUpload_Model.countDocuments({ adminview: true, status: 'In process' }).then((count) => {
             totalfileinprocess = count;
             res.status(200).json({
               totalfileuploaded,
@@ -266,6 +266,61 @@ router.get("/getusernotificationsfileuploadto/:email", (req, res) => {
     })
     .catch((err) => res.status(400).json(`Error: ${err}`));
 });
+
+router.get("/getusernotificationsfileuploadto/:email", (req, res) => {
+  const { email } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Notification_Model.find({ useremail: email }).sort({ date: -1 }).limit(8)
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
+
+
+
+router.get("/deletefileuploadto/:id", (req, res) => {
+  const { id } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  FileUpload_Model.findOneAndUpdate(
+    { _id: id },
+    { adminview: false },
+    { useFindAndModify: false }
+  )
+    .then(() => {
+      res.status(200).json("Updated Product");
+    })
+    .catch((err) => console.log(err));
+});
+
+
+
+router.get("/getuserallfileuploadedtoserveradmin", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  FileUpload_Model.find({ adminview: true }).sort({ date: -1 })
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
+
+
+
+
+router.get("/deletefileuploadtouser/:id", (req, res) => {
+  const { id } = req.params;
+
+  res.setHeader("Content-Type", "application/json");
+  
+  FileUpload_Model.findOneAndDelete({ _id: id })
+    .then((data) => {
+      res.status(200).json("Removed");
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+
+});
+
+
 
 
 

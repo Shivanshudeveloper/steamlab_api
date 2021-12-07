@@ -45,6 +45,11 @@ const usersfileuploadchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    adminview: {
+        type: Boolean,
+        required: false,
+        default: true
+    },
     date: {
         type: Date,
         default: Date.now
