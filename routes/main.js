@@ -10,6 +10,7 @@ const MainStore_Model = require("../models/MainStore");
 
 const FeaturedProduct_Model = require("../models/FeaturedProduct");
 const Notification_Model = require("../models/Notification");
+const Userfileupload_Model = require("../models/Userfileupload");
 
 
 const FileUpload_Model = require("../models/FileUpload");
@@ -321,6 +322,118 @@ router.get("/deletefileuploadtouser/:id", (req, res) => {
 });
 
 
+// Database CRUD Operations
+// @POST Request to GET the People
+// POST
+router.post("/adduserfileto", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  const {
+    email,
+    displayName,
+    vat,
+    billingaddress
+  } = req.body;
+
+  Userfileupload_Model.countDocuments({ email }).then((count) => {
+    if (count === 0) {
+      const newUserFileUpload = new Userfileupload_Model({
+        email,
+        displayName,
+        vat,
+        billingaddress
+      });
+      newUserFileUpload
+        .save()
+        .then((data) => {
+          res.status(200).json(data._id);
+        })
+        .catch(
+          (err) => {
+            console.log(err)
+          }
+        );
+    }
+  });
+});
+
+
+router.get("/getuserdetaislfileupload/:email", (req, res) => {
+  const { email } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.find({ email })
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
+
+
+
+router.get("/updateuserfileupload/:email/:vat/:billingaddress", (req, res) => {
+  const { email, vat, billingaddress } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.findOneAndUpdate(
+    { email },
+    { vat, billingaddress },
+    { useFindAndModify: false }
+  )
+    .then(() => {
+      res.status(200).json("Updated Product");
+    })
+    .catch((err) => console.log(err));
+});
+
+
+
+router.get("/getallusersdatafileupload", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.find({  }).sort({ date: -1 })
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
+
+
+router.get("/blockuserfileupload/:id", (req, res) => {
+  const { id } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.findOneAndUpdate(
+    { _id: id },
+    { access: false },
+    { useFindAndModify: false }
+  )
+    .then(() => {
+      res.status(200).json("Updated Product");
+    })
+    .catch((err) => console.log(err));
+});
+
+
+router.get("/unblockuserfileupload/:id", (req, res) => {
+  const { id } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.findOneAndUpdate(
+    { _id: id },
+    { access: true },
+    { useFindAndModify: false }
+  )
+    .then(() => {
+      res.status(200).json("Updated Product");
+    })
+    .catch((err) => console.log(err));
+});
+
+
+router.get("/getuseraccesspermissionfileupload/:email", (req, res) => {
+  const { email } = req.params;
+  res.setHeader("Content-Type", "application/json");
+  Userfileupload_Model.find({ email }).sort({ date: -1 })
+    .then((data) => {
+      res.status(200).json(data);
+    })
+    .catch((err) => res.status(400).json(`Error: ${err}`));
+});
 
 
 
